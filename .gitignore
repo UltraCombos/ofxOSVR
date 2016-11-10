@@ -1,5 +1,7 @@
 /sample/obj
 /sample/bin/*
-!/sample/bin/data
 /sample/*.sdf
 /sample/.vs
+/sample/.db
+/sample/.opendb
+/temp

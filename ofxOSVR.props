@@ -4,15 +4,15 @@
   <PropertyGroup Label="UserMacros" /> 
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);..\..\..\addons\ofxOSVR\src;..\..\..\addons\ofxOSVR\libs\sdk\$(Platform)\include;..\..\..\addons\ofxOSVR\libs</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);..\..\..\addons\ofxOSVR\src;..\..\..\addons\ofxOSVR\libs;$(OSVR_SERVER_ROOT)..\..\SDK\$(Platform)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);..\..\..\addons\ofxOSVR\libs\sdk\$(Platform)\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(OSVR_SERVER_ROOT)..\..\SDK\$(Platform)\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies Condition="'$(Configuration)'=='Debug'">functionalityd.lib;jsoncppd.lib;osvrAnalysisPluginKitd.lib;osvrClientd.lib;osvrClientKitd.lib;osvrCommond.lib;osvrConnectiond.lib;osvrJointClientKitd.lib;osvrPluginHostd.lib;osvrPluginKitd.lib;osvrRenderManagerd.lib;osvrServerd.lib;osvrUSBSeriald.lib;osvrUtild.lib;osvrVRPNServerd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)'!='Debug'">functionalityd.lib;jsoncpp.lib;osvrAnalysisPluginKit.lib;osvrClient.lib;osvrClientKit.lib;osvrCommon.lib;osvrConnection.lib;osvrJointClientKit.lib;osvrPluginHost.lib;osvrPluginKit.lib;osvrRenderManager.lib;osvrServer.lib;osvrUSBSerial.lib;osvrUtil.lib;osvrVRPNServer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
 	<PostBuildEvent>
-	  <Command Condition="'$(Platform)'!='Win32'">xcopy /e /i /y "$(ProjectDir)..\..\..\addons\ofxOSVR\libs\sdk\$(Platform)\bin\osvr*.dll" "$(ProjectDir)\bin"
+	  <Command Condition="'$(Platform)'!='Win32'">xcopy /e /i /y "$(OSVR_SERVER_ROOT)..\..\SDK\$(Platform)\bin\osvr*.dll" "$(ProjectDir)\bin"
 %(Command)</Command>
     </PostBuildEvent>	
   </ItemDefinitionGroup>
