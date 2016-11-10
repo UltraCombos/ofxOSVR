@@ -1,0 +1,5 @@
+/sample/obj
+/sample/bin/*
+!/sample/bin/data
+/sample/*.sdf
+/sample/.vs
