@@ -2,6 +2,6 @@
 /sample/bin/*
 /sample/*.sdf
 /sample/.vs
-/sample/.db
-/sample/.opendb
+/sample/*.db
+/sample/*.opendb
 /temp

@@ -54,7 +54,7 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	ofSetWindowTitle("oF Application: " + ofToString(ofGetFrameRate(), 1));
+	ofSetWindowTitle("ofxOSVR sample: " + ofToString(ofGetFrameRate(), 1));
 
 
 	// update params
