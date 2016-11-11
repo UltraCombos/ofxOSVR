@@ -73,11 +73,7 @@ void OpenSourceVirtualReality::threadFunction(bool serverAutoStart)
 				for (auto& path : interface_paths)
 				{
 					ofLogNotice(module, "interface add: %s\n", path.c_str());
-
-					interfaces[path] = InterfaceInfo();
-					InterfaceInfo& info = interfaces[path];
-					info.interface = ctx.getInterface(path);
-					//info.interface.registerCallback((OSVR_PoseCallback)OpenSourceVirtualReality::poseCallback, this);
+					interface_infos[path] = InterfaceInfo(ctx.getInterface(path));
 				}
 				interface_paths.clear();
 			}
@@ -86,8 +82,49 @@ void OpenSourceVirtualReality::threadFunction(bool serverAutoStart)
 		ctx.update();
 
 		printf("display valid\n");
-		printf("%u viewers\n", display.getNumViewers());
+		for (uint32_t i = 0; i < display.getNumViewers(); i++)
+		{
+			auto& viewer = display.getViewer(i);
+			auto viewer_id = viewer.getViewerID();
+			if (viewers.find(viewer_id) == viewers.end())
+				viewers[viewer_id] = Viewer();
+			auto& curr_viewer = viewers[viewer_id];
+			for (uint32_t j = 0; j < viewer.getNumEyes(); j++)
+			{
+				auto& eye = viewer.getEye(j);
+				auto eye_id = eye.getEyeID();
+				if (curr_viewer.eyes.find(eye_id) == curr_viewer.eyes.end())
+					curr_viewer.eyes[eye_id] = Eye();
+				auto& curr_eye = curr_viewer.eyes[eye_id];
+
+				float view_mat[OSVR_MATRIX_SIZE];
+				if (eye.getViewMatrix(OSVR_MATRIX_COLMAJOR | OSVR_MATRIX_COLVECTORS, view_mat))
+				{
+					memcpy(curr_eye.modelview_matrix.getPtr(), view_mat, sizeof(float) * OSVR_MATRIX_SIZE);
+				}
+
+				for (uint32_t k = 0; k < eye.getNumSurfaces(); k++)
+				{
+					auto& surface = eye.getSurface(k);
+					auto surface_id = surface.getSurfaceID();
+					if (curr_eye.surfaces.find(surface_id) == curr_eye.surfaces.end())
+						curr_eye.surfaces[surface_id] = Surface();
+					auto& curr_surface = curr_eye.surfaces[surface_id];
+
+					auto viewport = surface.getRelativeViewport();
+					curr_surface.viewport.set(viewport.left, viewport.bottom, viewport.width, viewport.height);
+
+					float z_near = 0.1;
+					float z_far = 100;
+					float proj_mat[OSVR_MATRIX_SIZE];
+					surface.getProjectionMatrix(z_near, z_far, OSVR_MATRIX_COLMAJOR | OSVR_MATRIX_COLVECTORS | OSVR_MATRIX_SIGNEDZ | OSVR_MATRIX_RHINPUT, proj_mat);
+					memcpy(curr_surface.projection_matrix.getPtr(), proj_mat, sizeof(float) * OSVR_MATRIX_SIZE);
+				}
+			}
+		}
+
 		int num_eye = 0;
+		display.getViewer(0).getEye(0).getSurface(0);
 		display.forEachEye([&](osvr::clientkit::Eye eye)
 		{
 			num_eye++;
@@ -140,18 +177,22 @@ void OpenSourceVirtualReality::threadFunction(bool serverAutoStart)
 #endif
 
 		// interface state
-		for (auto& f : interfaces)
 		{
-			printf("check for interface: %s\n", f.first.c_str());
-			InterfaceInfo& info = f.second;
-			OSVR_ReturnCode ret = osvrGetPoseState(info.interface.get(), &info.timestamp, &info.state);
-			if (ret != OSVR_RETURN_SUCCESS) {
-				printf("No pose state!\n");
-			}
-			else {
-				std::lock_guard<std::mutex> guard(mtx);
+			std::lock_guard<std::mutex> guard(mtx);
+			for (auto& f : interface_infos)
+			{
+				printf("check for interface: %s\n", f.first.c_str());
+				InterfaceInfo& info = f.second;
+				OSVR_ReturnCode ret = osvrGetPoseState(info.interface.get(), &info.timestamp, &info.state);
+				if (ret != OSVR_RETURN_SUCCESS) {
+					printf("No pose state!\n");
+				}
+				else {
+
+				}
 			}
 		}
+		
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000 / fps));
 	}

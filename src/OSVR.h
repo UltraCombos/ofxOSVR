@@ -32,14 +32,14 @@ public:
 	bool getInterfacePose(const std::string& path, ofVec3f& translation, ofQuaternion& rotation)
 	{
 		std::lock_guard<std::mutex> guard(mtx);
-		if (interfaces.find(path) == interfaces.end())
+		if (interface_infos.find(path) == interface_infos.end())
 		{
 			ofLogWarning(module, "interface is not found with path: %s", path.c_str());
 			return false;
 		}
 			
 
-		auto& state = interfaces[path].state;
+		auto& state = interface_infos[path].state;
 		double x, y, z, w;
 
 		x = state.translation.data[0];
@@ -56,16 +56,36 @@ public:
 		return true;
 	}
 
+	struct Surface
+	{
+		ofMatrix4x4 projection_matrix;
+		ofRectangle viewport;
+	};
+
+	struct Eye
+	{
+		ofMatrix4x4 modelview_matrix;
+		std::map<uint32_t, Surface> surfaces;
+	};
+
+	struct Viewer
+	{
+		std::map<uint32_t, Eye> eyes;
+	};
+
 protected:
 	struct InterfaceInfo
 	{	
-		osvr::clientkit::Interface interface;
-		ofVec3f translation;
-		
+		InterfaceInfo() {}
+		InterfaceInfo(osvr::clientkit::Interface face)
+			:interface(face)
+		{
+
+		}
+		osvr::clientkit::Interface interface;		
 		OSVR_PoseState state;
 		OSVR_TimeValue timestamp;
 	};
-
 
 private:
 	OpenSourceVirtualReality(std::string applicationIdentifier, bool serverAutoStart);
@@ -89,5 +109,6 @@ private:
 
 	std::deque<std::string> interface_paths;
 	//std::map<std::string, osvr::clientkit::Interface> interfaces;
-	std::map<std::string, InterfaceInfo> interfaces;
+	std::map<std::string, InterfaceInfo> interface_infos;
+	std::map<uint32_t, Viewer> viewers;
 };
