@@ -55,6 +55,8 @@ private:
 
 	// osvr
 	OpenSourceVirtualRealityRef osvr;
+	const string osvr_identifier = "com.osvr.client.openFrameworks";
+	const string osvr_interface_head = "/me/head";
 };
 
 

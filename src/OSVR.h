@@ -29,32 +29,7 @@ public:
 		interface_paths.push_back(path);
 	}
 
-	bool getInterfacePose(const std::string& path, ofVec3f& translation, ofQuaternion& rotation)
-	{
-		std::lock_guard<std::mutex> guard(mtx);
-		if (interface_infos.find(path) == interface_infos.end())
-		{
-			ofLogWarning(module, "interface is not found with path: %s", path.c_str());
-			return false;
-		}
-			
-
-		auto& state = interface_infos[path].state;
-		double x, y, z, w;
-
-		x = state.translation.data[0];
-		y = state.translation.data[1];
-		z = state.translation.data[2];
-		translation.set(x, y, z);
-
-		x = osvrQuatGetX(&(state.rotation));
-		y = osvrQuatGetY(&(state.rotation));
-		z = osvrQuatGetZ(&(state.rotation));
-		w = osvrQuatGetW(&(state.rotation));
-		rotation.set(x, y, z, w);
-
-		return true;
-	}
+	bool getInterfacePose(const std::string& path, ofVec3f& translation, ofQuaternion& rotation);
 
 	struct Surface
 	{
@@ -72,6 +47,12 @@ public:
 	{
 		std::map<uint32_t, Eye> eyes;
 	};
+
+	std::map<uint32_t, Viewer> getViewers()
+	{
+		std::lock_guard<std::mutex> guard(mtx);
+		return viewers;
+	}
 
 protected:
 	struct InterfaceInfo

@@ -16,8 +16,8 @@ void ofApp::setup(){
 	
 	// osvr
 	{
-		osvr = OpenSourceVirtualReality::create("com.osvr.client.cinder");
-		osvr->addInterface("/me/head");
+		osvr = OpenSourceVirtualReality::create(osvr_identifier);
+		osvr->addInterface(osvr_interface_head);
 	}
 
 	// allocate fbo
@@ -26,15 +26,16 @@ void ofApp::setup(){
         s.width = FBO_WIDTH;
 		s.height = FBO_HEIGHT;
         s.useDepth = true;
-		s.colorFormats = { GL_RGBA };
+		s.colorFormats = { GL_RGBA8 };
         
         fbo.allocate(s);
     }
     
 	// setup gui
     {
-		gui.setup("gui");
-		
+		gui.setup();
+		gui.setName("gui");
+
 		ofParameterGroup g_settings;
 		g_settings.setName("settings");
 		g_settings.add(time_step.set("time_step", 1.0f / 120.0f, 0.0f, 1.0f / 30.0f));
@@ -56,6 +57,15 @@ void ofApp::setup(){
 void ofApp::update(){
 	ofSetWindowTitle("ofxOSVR sample: " + ofToString(ofGetFrameRate(), 1));
 
+	ofVec3f translation;
+	ofQuaternion rotation;
+	osvr->getInterfacePose(osvr_interface_head, translation, rotation);
+	ofMatrix4x4 model_matrix;
+	model_matrix.setTranslation(translation);
+	model_matrix.setRotate(rotation);
+
+	
+	
 
 	// update params
 	updateParameters();
@@ -65,6 +75,34 @@ void ofApp::update(){
 		fbo.begin();
 		auto viewport = ofGetCurrentViewport();
 		ofClear(0);
+
+		auto viewers = osvr->getViewers();
+		for (auto& vi : viewers)
+		{
+			for (auto& eye : vi.second.eyes)
+			{
+				auto& this_eye = eye.second;
+				ofPushMatrix();
+				ofSetMatrixMode(ofMatrixMode::OF_MATRIX_MODELVIEW);
+				ofLoadMatrix(this_eye.modelview_matrix);
+								
+				for (auto& sf : this_eye.surfaces)
+				{
+					auto& this_surface = sf.second;
+					ofPushView();
+					ofViewport(this_surface.viewport);
+					ofPushMatrix();
+					ofSetMatrixMode(ofMatrixMode::OF_MATRIX_PROJECTION);
+					ofLoadMatrix(this_surface.projection_matrix);
+
+					// draw something
+
+					ofPopMatrix();
+					ofPopView();
+				}
+				ofPopMatrix();
+			}
+		}
 
 
 		fbo.end();
