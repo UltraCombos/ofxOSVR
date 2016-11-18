@@ -77,30 +77,57 @@ void ofApp::update(){
 		ofClear(0);
 
 		auto viewers = osvr->getViewers();
+		
 		for (auto& vi : viewers)
 		{
 			for (auto& eye : vi.second.eyes)
 			{
 				auto& this_eye = eye.second;
-				ofPushMatrix();
-				ofSetMatrixMode(ofMatrixMode::OF_MATRIX_MODELVIEW);
-				ofLoadMatrix(this_eye.modelview_matrix);
-								
 				for (auto& sf : this_eye.surfaces)
 				{
 					auto& this_surface = sf.second;
+					
 					ofPushView();
 					ofViewport(this_surface.viewport);
-					ofPushMatrix();
+					
 					ofSetMatrixMode(ofMatrixMode::OF_MATRIX_PROJECTION);
-					ofLoadMatrix(this_surface.projection_matrix);
+					ofPushMatrix(); // projection matrix
 
-					// draw something
+					ofMatrix4x4 proj;
+					ofLoadIdentityMatrix();
+					ofScale(1.0f, -1.0f, 1.0f);
+					ofMultMatrix(this_surface.projection_matrix);
+					
+					{
+						ofSetMatrixMode(ofMatrixMode::OF_MATRIX_MODELVIEW);
+						ofPushMatrix(); // modelview matrix
+						ofLoadMatrix(this_eye.modelview_matrix);
 
-					ofPopMatrix();
+						//auto trans = this_eye.modelview_matrix.getInverse().getTranslation();
+						//printf("eye trans %f, %f, %f\n", trans.x, trans.y, trans.z);
+						//printf("viewport: %f, %f, %f, %f\n", this_surface.viewport.x, this_surface.viewport.y, this_surface.viewport.width, this_surface.viewport.height);
+
+						// draw something
+						int num_box = 20;
+						float da = TWO_PI / num_box;
+						float r = 1.0f * g_threshold;
+						for (int i = 0; i < num_box; i++)
+						{
+							float x = cos(da * i) * r;
+							float y = sin(da * i) * r;
+							ofDrawBox(x, 0.0f, y, 0.1f);
+						}
+
+						ofPopMatrix(); // modelview matrix
+					}
+					ofSetMatrixMode(ofMatrixMode::OF_MATRIX_PROJECTION);
+					ofPopMatrix(); // projection matrix
+
+					ofSetMatrixMode(ofMatrixMode::OF_MATRIX_MODELVIEW);
+
 					ofPopView();
 				}
-				ofPopMatrix();
+				
 			}
 		}
 

@@ -75,6 +75,8 @@ void OpenSourceVirtualReality::threadFunction(bool serverAutoStart)
 				{
 					ofLogNotice(module, "interface add: %s\n", path.c_str());
 					interface_infos[path] = InterfaceInfo(ctx.getInterface(path));
+
+					osvrRegisterPoseCallback(interface_infos[path].interface.get(), poseCallback, this);
 				}
 				interface_paths.clear();
 			}
@@ -99,11 +101,9 @@ void OpenSourceVirtualReality::threadFunction(bool serverAutoStart)
 						curr_viewer.eyes[eye_id] = Eye();
 					auto& curr_eye = curr_viewer.eyes[eye_id];
 
-					float view_mat[OSVR_MATRIX_SIZE];
-					if (eye.getViewMatrix(OSVR_MATRIX_COLMAJOR | OSVR_MATRIX_COLVECTORS, view_mat))
-					{
-						memcpy(curr_eye.modelview_matrix.getPtr(), view_mat, sizeof(float) * OSVR_MATRIX_SIZE);
-					}
+					OSVR_MatrixConventions view_flag = OSVR_MATRIX_ROWMAJOR | OSVR_MATRIX_ROWVECTORS;
+					eye.getViewMatrix(view_flag, curr_eye.modelview_matrix.getPtr());
+					//curr_eye.modelview_matrix = ofMatrix4x4::getInverseOf(curr_eye.modelview_matrix);
 
 					for (uint32_t k = 0; k < eye.getNumSurfaces(); k++)
 					{
@@ -116,11 +116,10 @@ void OpenSourceVirtualReality::threadFunction(bool serverAutoStart)
 						auto viewport = surface.getRelativeViewport();
 						curr_surface.viewport.set(viewport.left, viewport.bottom, viewport.width, viewport.height);
 
-						float z_near = 0.1;
-						float z_far = 100;
-						float proj_mat[OSVR_MATRIX_SIZE];
-						surface.getProjectionMatrix(z_near, z_far, OSVR_MATRIX_COLMAJOR | OSVR_MATRIX_COLVECTORS | OSVR_MATRIX_SIGNEDZ | OSVR_MATRIX_RHINPUT, proj_mat);
-						memcpy(curr_surface.projection_matrix.getPtr(), proj_mat, sizeof(float) * OSVR_MATRIX_SIZE);
+						float z_near = 0.01;
+						float z_far = 500;
+						OSVR_MatrixConventions proj_flag = view_flag | OSVR_MATRIX_SIGNEDZ | OSVR_MATRIX_RHINPUT;
+						surface.getProjectionMatrix(z_near, z_far, proj_flag, curr_surface.projection_matrix.getPtr());
 					}
 				}
 			}
@@ -185,7 +184,7 @@ void OpenSourceVirtualReality::threadFunction(bool serverAutoStart)
 			std::lock_guard<std::mutex> guard(mtx);
 			for (auto& f : interface_infos)
 			{
-				std::printf("check for interface: %s\n", f.first.c_str());
+				//std::printf("check for interface: %s\n", f.first.c_str());
 				InterfaceInfo& info = f.second;
 				OSVR_ReturnCode ret = osvrGetPoseState(info.interface.get(), &info.timestamp, &info.state);
 				if (ret != OSVR_RETURN_SUCCESS) {
